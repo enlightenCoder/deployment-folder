@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foodcatalapp
+  labels:
+    app: foodcatalapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: foodcatalapp
+  template:
+    metadata:
+      labels:
+        app: foodcatalapp
+    spec:
+      containers:
+        - name: foodcatalapp
+          image: christopherami/food-catalogue-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9093
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: foodCataldb-url
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mysql-username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: mysql-password
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: mysql-driver
+            - name: SPRING_JPA_DATABASE_PLATFORM
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: mysql-platform
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: foodcatal-service
+spec:
+  selector:
+    app: foodcatalapp
+  ports:
+    - protocol: TCP
+      port: 9093
+      targetPort: 9093

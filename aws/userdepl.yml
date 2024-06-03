@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: userapp
+    labels:
+        app: userapp
+spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: userapp
+    template:
+        metadata:
+            labels:
+                app: userapp
+        spec:
+            containers:
+            - name: userapp
+              image: christopherami/user-service:latest
+              imagePullPolicy: Always
+              ports:
+                - containerPort: 9092
+              env:
+                - name: SPRING_DATASOURCE_URL
+                  valueFrom:
+                    configMapKeyRef:
+                        name: configmap
+                        key: userappdb-url
+                - name: SPRING_DATASOURCE_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                        name: secret
+                        key: mysql-username
+                - name: SPRING_DATASOURCE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                        name: secret
+                        key: mysql-password
+                - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                        name: configmap
+                        key: mysql-driver
+                - name: SPRING_JPA_DATABASE_PLATFROM
+                  valueFrom:
+                    configMapKeyRef:
+                        name: configmap
+                        key: mysql-platform
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: user-service
+spec:
+    selector:
+        app: userapp
+    ports:
+     - protocol: TCP
+       port: 9092
+       targetPort: 9092
+        
+                            

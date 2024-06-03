@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: restaurantapp
+    labels:
+        app: restaurantapp
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: restaurantapp
+    template:
+        metadata:
+            labels:
+                app: restaurantapp
+        spec:
+            containers:
+              - name: restaurantapp
+                image: christopherami/restaurant-listing-service:latest
+                imagePullPolicy: Always
+                ports:
+                  - containerPort: 9091
+                env:
+                  - name: SPRING_DATASOURCE_USERNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: secret
+                            key: mysql-username
+                  
+                  - name: SPRING_DATASOURCE_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: secret
+                            key: mysql-password
+                            
+                  - name: SPRING_DATASOURCE_URL
+                    valueFrom:
+                        configMapKeyRef:
+                            name: configmap
+                            key: restaurantdb_url
+                  
+                  - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+                    valueFrom:
+                        configMapKeyRef:
+                            name: configmap
+                            key: mysql-driver
+                            
+                  - name: SPRING_JPA_DATABASE_PLATFORM
+                    valueFrom:
+                        configMapKeyRef:
+                            name: configmap
+                            key: mysql-platform
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: restaurant-service
+spec:
+    selector:
+        app: restaurantapp
+    ports:
+      - protocol: TCP
+        port: 9091
+        targetPort: 9091
